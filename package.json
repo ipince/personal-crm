@@ -1,0 +1,22 @@
+{
+  "name": "personal-crm",
+  "version": "0.0.0",
+  "description": "Personal CRM",
+  "main": "web.js",
+  "dependencies": {
+    "googleapis": "~0.7.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ipince/personal-crm.git"
+  },
+  "author": "",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/ipince/personal-crm/issues"
+  }
+}
