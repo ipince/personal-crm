@@ -4,6 +4,7 @@
   "description": "Personal CRM",
   "main": "web.js",
   "dependencies": {
+    "dotenv": "^1.2.0",
     "googleapis": "~0.7.0"
   },
   "devDependencies": {},
@@ -15,7 +16,7 @@
     "url": "git://github.com/ipince/personal-crm.git"
   },
   "author": "",
-  "license": "BSD",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ipince/personal-crm/issues"
   }

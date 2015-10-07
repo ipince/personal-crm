@@ -4,15 +4,17 @@ var httplib = require('http');
 var httpslib = require('https');
 var urllib = require('url');
 var googleapis = require('googleapis');
+require('dotenv').load();
 
 OAuth2Client = googleapis.OAuth2Client;
 
-var CLIENT_ID = 'REDACTED
+var CLIENT_ID = 'REDACTED';
 var CLIENT_SECRET = 'REDACTED';
 var CALLBACK = 'http://127.0.0.1:8080/oauthcallback';
 var CONTACTS_URL = 'https://www.google.com/m8/feeds/contacts/default/full?alt=json&max-results=10000&access_token=';
 
 var port = process.env.PORT || 8080;
+
 
 var client = new OAuth2Client(CLIENT_ID, CLIENT_SECRET, CALLBACK);
 
@@ -61,6 +63,6 @@ var server = httplib.createServer(
   }
 );
 
-server.listen(port);
+server.listen(process.env.PORT);
 
 console.log('Up and running');
