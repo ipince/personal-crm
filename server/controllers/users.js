@@ -1,4 +1,4 @@
-// users.js
+
 var config = require('../config'),
     client = config.client,
     parsed = config.parsed

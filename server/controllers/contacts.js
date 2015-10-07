@@ -1,4 +1,4 @@
-// contacts.js
+
 var https = require('https');
 var config = require('../config'),
     CONTACTS_URL = config.CONTACTS_URL,
