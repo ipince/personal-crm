@@ -2,21 +2,22 @@
 
 var usersController = require('../controllers/users');
 var contactsController = require('../controllers/contacts');
+var routes = require('./routes');
 
 module.exports = function(app) {
-  filters(app);
-  routes(app);
+  filter(app);
+  route(app);
 }
 
-function filters(app) {
+function filter(app) {
   app.use(function(req, res, next) {
     console.log('im in your middleware, eating yo cheese');
     next();
   });
 }
 
-function routes(app) {
-  app.get('/login', usersController.googleLogin);
-  app.get('/oauthcallback', usersController.signin);
-  app.get('/contacts', contactsController.getContacts);
+function route(app) {
+  app.get(routes.login, usersController.googleLogin);
+  app.get(routes.oauthcallback, usersController.signin);
+  app.get(routes.contacts, contactsController.getContacts);
 }
