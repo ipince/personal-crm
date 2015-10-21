@@ -1,13 +1,7 @@
 #!/usr/bin/env node
 
-if (process.env.NODE_ENV === 'local') {
-  console.log('here');
-  require('dotenv').load();
-}
-
 var express = require('express');
 var middleware = require('./config/middleware');
-
 
 var app = express();
 
