@@ -25,20 +25,13 @@ func main() {
 	}
 	srv := people.Client(ctx, config)
 
-	people.List(srv, 10)
-	test, err := people.Get(srv, people.TestPersonID)
+	all, err := people.ListAll(srv)
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Printf("Fetched %d connections\n", len(all))
 
-	bytes, err := test.MarshalJSON()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(string(bytes))
-
-	err = people.SetBirthdate(srv, people.TestPersonID, 1, 2, nil)
-	if err != nil {
-		fmt.Println(err)
+	for _, p := range all {
+		people.Validate(p)
 	}
 }

@@ -1,6 +1,7 @@
 package people
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -97,6 +98,34 @@ func SetBirthdate(srv *peoplev1.Service, id string, day, month int64, year *int6
 	return err
 }
 
+func ListAll(srv *peoplev1.Service) ([]*peoplev1.Person, error) {
+	const pageSize = 1000
+	r, err := srv.People.Connections.List("people/me").
+		PageSize(pageSize).
+		PersonFields(allFields()).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	people := make([]*peoplev1.Person, 0, r.TotalItems)
+	for {
+		people = append(people, r.Connections...)
+		if int64(len(people)) >= r.TotalItems {
+			break
+		}
+
+		r, err = srv.People.Connections.List("people/me").
+			PageSize(pageSize).
+			PageToken(r.NextPageToken).
+			PersonFields(allFields()).Do()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return people, nil
+}
+
 func List(srv *peoplev1.Service, limit int) {
 	r, err := srv.People.Connections.List("people/me").
 		PageSize(int64(limit)).
@@ -118,8 +147,42 @@ func List(srv *peoplev1.Service, limit int) {
 	}
 }
 
+// Validate prints any non-conforming fields found in the given person
+func Validate(person *peoplev1.Person) {
+	var errs []error
+	err := validateNames(person)
+	if err != nil {
+		errs = append(errs, err)
+	}
+
+	if len(errs) > 0 {
+		fmt.Printf("Failed to validate person %s\n", link(person))
+		for _, e := range errs {
+			fmt.Println(e)
+		}
+	}
+	//printBirthdays(person)
+}
+
+func validateNames(person *peoplev1.Person) error {
+	if len(person.Names) == 0 {
+		if len(person.Organizations) != 1 {
+			// Only allow no name for a business contact. A business contact
+			// only has one organization (the name of the business).
+			return errors.New("no name found")
+		}
+	} else if len(person.Names) > 1 {
+		displayNames := []string{}
+		for _, n := range person.Names {
+			displayNames = append(displayNames, n.DisplayName)
+		}
+		return errors.New("too many names found (expected 1): " + strings.Join(displayNames, ","))
+	}
+	return nil
+}
+
 func printBirthdays(person *peoplev1.Person) {
-	fmt.Printf("Found %d birthdays in person: ", len(person.Birthdays))
+	fmt.Printf("Found %d birthdays in person %s: ", len(person.Birthdays), person.Names[0].DisplayName)
 	for _, b := range person.Birthdays {
 		if b.Date != nil {
 			fmt.Printf("date %d/%d/%d, ", b.Date.Day, b.Date.Month, b.Date.Year)
@@ -128,6 +191,11 @@ func printBirthdays(person *peoplev1.Person) {
 		}
 	}
 	fmt.Println()
+}
+
+func link(person *peoplev1.Person) string {
+	parts := strings.Split(person.ResourceName, "/")
+	return "https://contacts.google.com/person/" + parts[1]
 }
 
 func allFields() string {
