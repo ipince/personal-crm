@@ -1,11 +1,11 @@
 package people
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"strings"
 
+	"github.com/ghodss/yaml"
 	peoplev1 "google.golang.org/api/people/v1"
 )
 
@@ -93,8 +93,12 @@ func SetBirthdate(srv *peoplev1.Service, id string, day, month int64, year *int6
 	}
 	person.Birthdays[0] = dob
 
-	_, err = srv.People.UpdateContact(id, person).
-		UpdatePersonFields("birthdays").Do()
+	return update(srv, person, "birthdays")
+}
+
+func update(srv *peoplev1.Service, person *peoplev1.Person, fields string) error {
+	_, err := srv.People.UpdateContact(person.ResourceName, person).
+		UpdatePersonFields(fields).Do()
 	return err
 }
 
@@ -147,38 +151,16 @@ func List(srv *peoplev1.Service, limit int) {
 	}
 }
 
-// Validate prints any non-conforming fields found in the given person
-func Validate(person *peoplev1.Person) {
-	var errs []error
-	err := validateNames(person)
+func Print(person *peoplev1.Person) {
+	j, err := person.MarshalJSON()
 	if err != nil {
-		errs = append(errs, err)
+		fmt.Println(err)
 	}
-
-	if len(errs) > 0 {
-		fmt.Printf("Failed to validate person %s\n", link(person))
-		for _, e := range errs {
-			fmt.Println(e)
-		}
+	y, err := yaml.JSONToYAML(j)
+	if err != nil {
+		fmt.Println(err)
 	}
-	//printBirthdays(person)
-}
-
-func validateNames(person *peoplev1.Person) error {
-	if len(person.Names) == 0 {
-		if len(person.Organizations) != 1 {
-			// Only allow no name for a business contact. A business contact
-			// only has one organization (the name of the business).
-			return errors.New("no name found")
-		}
-	} else if len(person.Names) > 1 {
-		displayNames := []string{}
-		for _, n := range person.Names {
-			displayNames = append(displayNames, n.DisplayName)
-		}
-		return errors.New("too many names found (expected 1): " + strings.Join(displayNames, ","))
-	}
-	return nil
+	fmt.Println(string(y))
 }
 
 func printBirthdays(person *peoplev1.Person) {

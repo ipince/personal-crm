@@ -25,6 +25,33 @@ func main() {
 	}
 	srv := people.Client(ctx, config)
 
+	//testChanges(srv)
+	validateAndNormalizeAll(srv)
+}
+
+func testChanges(srv *peoplev1.Service) {
+	test, err := people.Get(srv, people.TestPersonID)
+	if err != nil {
+		fmt.Println(err)
+	}
+	people.Print(test)
+	err = people.Normalize(srv, test)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	rod, err := people.Get(srv, "people/c7332232915077060874")
+	if err != nil {
+		fmt.Println(err)
+	}
+	people.Print(rod)
+	err = people.Normalize(srv, rod)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func validateAndNormalizeAll(srv *peoplev1.Service) {
 	all, err := people.ListAll(srv)
 	if err != nil {
 		fmt.Println(err)
@@ -32,6 +59,10 @@ func main() {
 	fmt.Printf("Fetched %d connections\n", len(all))
 
 	for _, p := range all {
+		err = people.Normalize(srv, p)
+		if err != nil {
+			fmt.Println(err)
+		}
 		people.Validate(p)
 	}
 }
