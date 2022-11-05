@@ -230,13 +230,17 @@ func printBirthdays(person *peoplev1.Person) {
 	fmt.Println()
 }
 
-func facebookURL(person *peoplev1.Person) *peoplev1.Url {
+func facebookURLs(person *peoplev1.Person) []string {
+	urls := []string{}
+	if strings.Contains(Link(person), "//contacts.google.com/person/c7894887911642936979") {
+		fmt.Printf("%s has %d urls\n", person.Names[0].DisplayName, len(person.Urls))
+	}
 	for _, u := range person.Urls {
-		if strings.Contains(u.Value, "facebook.com") {
-			return u
+		if strings.Contains(u.Value, "facebook.com") { // could also match on Type.
+			urls = append(urls, u.Value)
 		}
 	}
-	return nil
+	return urls
 }
 
 func Link(person *peoplev1.Person) string {

@@ -23,11 +23,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	_ = people.Client(ctx, config)
+	srv := people.Client(ctx, config)
 
-	//testChanges(srv)
-	//validateAndNormalizeAll(srv)
-	//mergeFacebook(srv, fetchAll(srv))
+	validateAndNormalizeAll(srv)
+
+	testChanges(srv)
 }
 
 func fetchAll(srv *peoplev1.Service) []*peoplev1.Person {
@@ -40,15 +40,22 @@ func fetchAll(srv *peoplev1.Service) []*peoplev1.Person {
 }
 
 func testChanges(srv *peoplev1.Service) {
-	test, err := people.Get(srv, people.TestPersonID)
+	friends, err := people.LoadFacebookFriends("data/fb_export_2022-10-14.csv")
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-	people.Print(test)
-	err = people.Normalize(srv, test)
-	if err != nil {
-		fmt.Println(err)
-	}
+
+	people.MergeFacebookURLs(srv, fetchAll(srv), friends)
+
+	//test, err := people.Get(srv, people.TestPersonID)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//people.Print(test)
+	//err = people.Normalize(srv, test)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 	//err = people.SetFacebookURL(srv, test, "https://www.facebook.com/test")
 	//if err != nil {
 	//	fmt.Println(err)

@@ -10,41 +10,27 @@ import (
 	peoplev1 "google.golang.org/api/people/v1"
 )
 
-type facebookContact struct {
+type FacebookFriend struct {
 	Name string
 	URL  string
 }
 
 // MergeFacebookURLs reads a csv file of Facebook URLs and names, and attempts to merge them
 // into a slice of People.
-func MergeFacebookURLs(srv *peoplev1.Service, all []*peoplev1.Person) {
+func MergeFacebookURLs(srv *peoplev1.Service, all []*peoplev1.Person, fbFriends []*FacebookFriend) {
 
-	// Load up the (fbname, fburl) pairs
-	f, err := os.Open("data/fb_export_2021-06-30.csv") // TODO: run with new dataset
-	if err != nil {
-		panic(err)
-	}
-	records, err := csv.NewReader(f).ReadAll()
-	fbFriends := []*facebookContact{}
-	for _, r := range records {
-		fbFriends = append(fbFriends, &facebookContact{
-			Name: r[1],
-			URL:  r[2],
-		})
-	}
-
-	// Get contacts who already have an FB URL. These will not be edited. ... well, depends.
+	// Get contacts who already have an FB URL. These will not be edited.
 	fbContacts := map[string]*peoplev1.Person{}
 	for _, p := range all {
-		if u := facebookURL(p); u != nil {
-			fbContacts[u.Value] = p
+		for _, u := range facebookURLs(p) {
+			fbContacts[u] = p
 		}
 	}
 	fmt.Printf("Found %d contacts with fb links\n", len(fbContacts))
 
 	// For each fbFriend, see if we can find a contact who matches
 	for _, fbf := range fbFriends {
-		// Skip matching for contacts who already have a Facebook URL.
+		// Skip matching if we already have a contact with this Facebook URL.
 		if _, ok := fbContacts[fbf.URL]; ok {
 			continue
 		}
@@ -56,13 +42,13 @@ func MergeFacebookURLs(srv *peoplev1.Service, all []*peoplev1.Person) {
 				continue
 			}
 			if fbf.Name == c.Names[0].DisplayName {
+				found = true
 				// Easy match!
 				fmt.Printf("easy match! %s -> %s\n", fbf.URL, Link(c))
-				err = setFacebookURL(srv, c, fbf.URL)
+				err := setFacebookURLIfNoneExists(srv, c, fbf.URL)
 				if err != nil {
 					fmt.Println("ERR: " + err.Error())
 				}
-				found = true
 				break
 			}
 		}
@@ -79,7 +65,7 @@ func MergeFacebookURLs(srv *peoplev1.Service, all []*peoplev1.Person) {
 		// - If there are multiple matches, we print that out and let the user deal with it manually. This case
 		// may happen if a person has multiple fb profiles; or if two people actually have the same name.
 		time.Sleep(1 * time.Second)
-		r, err := srv.People.SearchContacts().Query(fbf.Name).ReadMask("names").Do()
+		r, err := srv.People.SearchContacts().Query(fbf.Name).ReadMask("names,urls").Do()
 		if err != nil {
 			fmt.Println("failed search query: " + err.Error())
 			continue
@@ -98,16 +84,47 @@ func MergeFacebookURLs(srv *peoplev1.Service, all []*peoplev1.Person) {
 				summary = append(summary, Link(r.Person))
 			}
 			fmt.Printf("too many results for %s (%s): %s\n", fbf.Name, fbf.URL, strings.Join(summary, ", "))
-		} else {
-			// exactly one match
-			fmt.Printf("query match! %s -> %s\n", fbf.Name, Link(r.Results[0].Person))
-			if facebookURL(r.Results[0].Person) != nil {
-				err = setFacebookURL(srv, r.Results[0].Person, fbf.URL)
-				if err != nil {
-					fmt.Println("ERR: " + err.Error())
-					continue
-				}
+		} else { // exactly one match
+			fmt.Printf("query match! %s -> %s\n", fbf.URL, Link(r.Results[0].Person))
+			err = setFacebookURLIfNoneExists(srv, r.Results[0].Person, fbf.URL)
+			if err != nil {
+				fmt.Println("ERR: " + err.Error())
+				continue
 			}
 		}
 	}
+}
+
+func LoadFacebookFriends(csvPath string) ([]*FacebookFriend, error) {
+	// Load up the (fbname, fburl) pairs
+	f, err := os.Open(csvPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	records, err := csv.NewReader(f).ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	friends := []*FacebookFriend{}
+	for _, r := range records {
+		friends = append(friends, &FacebookFriend{
+			Name: strings.TrimSpace(r[1]),
+			URL:  strings.TrimSpace(r[0]),
+		})
+	}
+	return friends, nil
+}
+
+func setFacebookURLIfNoneExists(srv *peoplev1.Service, person *peoplev1.Person, url string) error {
+	if len(facebookURLs(person)) == 0 {
+		err := setFacebookURL(srv, person, url)
+		if err != nil {
+			return err
+		}
+	} else {
+		fmt.Printf("skipping adding %s to %s because it would overwrite existing url\n", url, Link(person))
+	}
+	return nil
 }
