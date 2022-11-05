@@ -20,18 +20,13 @@ func Validate(person *peoplev1.Person) {
 	if err != nil {
 		errs = append(errs, err)
 	}
-	//err = validateExternalIDs(person)
-	//if err != nil {
-	//	errs = append(errs, err)
-	//}
 
 	if len(errs) > 0 {
-		fmt.Printf("Failed to validate person %s\n", link(person))
+		fmt.Printf("Failed to validate person %s\n", Link(person))
 		for _, e := range errs {
 			fmt.Println(e)
 		}
 	}
-	//printBirthdays(person)
 }
 
 func validateNames(person *peoplev1.Person) error {

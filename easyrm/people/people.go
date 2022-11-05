@@ -72,6 +72,40 @@ func Get(srv *peoplev1.Service, id string) (*peoplev1.Person, error) {
 		PersonFields(allFields()).Do()
 }
 
+// TODO: remove
+var stagingGroupID = "309a2c4c8b9dede5"
+
+func Insert(srv *peoplev1.Service, fullName, fbURL string) error {
+	person := &peoplev1.Person{
+		Names: []*peoplev1.Name{
+			{
+				UnstructuredName: fullName,
+			},
+		},
+		Urls: []*peoplev1.Url{
+			{
+				Type:  "Facebook",
+				Value: fbURL,
+			},
+		},
+		Memberships: []*peoplev1.Membership{
+			{
+				ContactGroupMembership: &peoplev1.ContactGroupMembership{
+					ContactGroupId:           stagingGroupID,
+					ContactGroupResourceName: fmt.Sprintf("contactGroups/%s", stagingGroupID),
+				},
+			},
+		},
+	}
+
+	_, err := srv.People.CreateContact(person).Do()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func SetBirthdate(srv *peoplev1.Service, id string, day, month int64, year *int64) error {
 
 	person, err := Get(srv, id)
@@ -94,6 +128,26 @@ func SetBirthdate(srv *peoplev1.Service, id string, day, month int64, year *int6
 	person.Birthdays[0] = dob
 
 	return update(srv, person, "birthdays")
+}
+
+func setFacebookURL(srv *peoplev1.Service, person *peoplev1.Person, fbURL string) error {
+
+	// Check if one exists and replace if so.
+	for _, u := range person.Urls {
+		if strings.Contains(u.Value, "facebook.com") {
+			// replace
+			u.Type = "Facebook" // maybe make it say facebook?
+			u.Value = fbURL
+			return update(srv, person, "urls")
+		}
+	}
+
+	// else, add it
+	person.Urls = append(person.Urls, &peoplev1.Url{
+		Type:  "Facebook",
+		Value: fbURL,
+	})
+	return update(srv, person, "urls")
 }
 
 func update(srv *peoplev1.Service, person *peoplev1.Person, fields string) error {
@@ -160,6 +214,7 @@ func Print(person *peoplev1.Person) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	fmt.Println(Link(person))
 	fmt.Println(string(y))
 }
 
@@ -175,7 +230,16 @@ func printBirthdays(person *peoplev1.Person) {
 	fmt.Println()
 }
 
-func link(person *peoplev1.Person) string {
+func facebookURL(person *peoplev1.Person) *peoplev1.Url {
+	for _, u := range person.Urls {
+		if strings.Contains(u.Value, "facebook.com") {
+			return u
+		}
+	}
+	return nil
+}
+
+func Link(person *peoplev1.Person) string {
 	parts := strings.Split(person.ResourceName, "/")
 	return "https://contacts.google.com/person/" + parts[1]
 }

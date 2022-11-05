@@ -23,10 +23,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
-	srv := people.Client(ctx, config)
+	_ = people.Client(ctx, config)
 
 	//testChanges(srv)
-	validateAndNormalizeAll(srv)
+	//validateAndNormalizeAll(srv)
+	//mergeFacebook(srv, fetchAll(srv))
+}
+
+func fetchAll(srv *peoplev1.Service) []*peoplev1.Person {
+	all, err := people.ListAll(srv)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Printf("Fetched %d connections\n", len(all))
+	return all
 }
 
 func testChanges(srv *peoplev1.Service) {
@@ -39,27 +49,31 @@ func testChanges(srv *peoplev1.Service) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	//err = people.SetFacebookURL(srv, test, "https://www.facebook.com/test")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 
-	rod, err := people.Get(srv, "people/c7332232915077060874")
-	if err != nil {
-		fmt.Println(err)
-	}
-	people.Print(rod)
-	err = people.Normalize(srv, rod)
-	if err != nil {
-		fmt.Println(err)
-	}
+	//err = people.Insert(srv, "auto inserted", "facebook.com/someurl")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+
+	//rod, err := people.Get(srv, "people/c7332232915077060874")
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//people.Print(rod)
+	//err = people.Normalize(srv, rod)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 }
 
 func validateAndNormalizeAll(srv *peoplev1.Service) {
-	all, err := people.ListAll(srv)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Printf("Fetched %d connections\n", len(all))
-
+	all := fetchAll(srv)
 	for _, p := range all {
-		err = people.Normalize(srv, p)
+		err := people.Normalize(srv, p)
 		if err != nil {
 			fmt.Println(err)
 		}

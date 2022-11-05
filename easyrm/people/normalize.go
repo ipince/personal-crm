@@ -22,7 +22,7 @@ func normalizePhoneNumbers(srv *peoplev1.Service, person *peoplev1.Person) error
 		}
 	}
 	if len(msgs) > 0 {
-		fmt.Println(link(person))
+		fmt.Println(Link(person))
 		fmt.Println(strings.Join(msgs, "\n"))
 
 		return update(srv, person, "phoneNumbers")
