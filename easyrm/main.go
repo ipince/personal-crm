@@ -40,41 +40,12 @@ func fetchAll(srv *peoplev1.Service) []*peoplev1.Person {
 }
 
 func testChanges(srv *peoplev1.Service) {
-	friends, err := people.LoadFacebookFriends("data/fb_export_2022-10-14.csv")
-	if err != nil {
-		panic(err)
-	}
-
-	people.MergeFacebookURLs(srv, fetchAll(srv), friends)
 
 	//test, err := people.Get(srv, people.TestPersonID)
 	//if err != nil {
 	//	fmt.Println(err)
 	//}
 	//people.Print(test)
-	//err = people.Normalize(srv, test)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//err = people.SetFacebookURL(srv, test, "https://www.facebook.com/test")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-
-	//err = people.Insert(srv, "auto inserted", "facebook.com/someurl")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-
-	//rod, err := people.Get(srv, "people/c7332232915077060874")
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//people.Print(rod)
-	//err = people.Normalize(srv, rod)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
 }
 
 func validateAndNormalizeAll(srv *peoplev1.Service) {

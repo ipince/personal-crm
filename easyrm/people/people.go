@@ -57,7 +57,7 @@ var PeopleFields = []string{
 	"clientData",
 	// "coverPhotos", // REMOVED: mostly default photo from Google+ (source=PROFILE)
 	"externalIds",
-	// "genders",  // TODO: Maybe use? TEMP
+	"genders", // TODO: Maybe use? TEMP
 	"interests",
 	"locales",
 	"locations", // TODO decide what to do
@@ -148,6 +148,19 @@ func setFacebookURL(srv *peoplev1.Service, person *peoplev1.Person, fbURL string
 		Value: fbURL,
 	})
 	return update(srv, person, "urls")
+}
+
+func updateAll(srv *peoplev1.Service, people []*peoplev1.Person, fields string) error {
+
+	toUpdate := map[string]peoplev1.Person{}
+	for _, p := range people {
+		toUpdate[p.ResourceName] = *p
+	}
+	_, err := srv.People.BatchUpdateContacts(&peoplev1.BatchUpdateContactsRequest{
+		Contacts:   toUpdate,
+		UpdateMask: fields,
+	}).Do()
+	return err
 }
 
 func update(srv *peoplev1.Service, person *peoplev1.Person, fields string) error {
