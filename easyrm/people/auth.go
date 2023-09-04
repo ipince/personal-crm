@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"golang.org/x/oauth2"
 	"google.golang.org/api/option"
@@ -19,7 +20,7 @@ func Client(ctx context.Context, config *oauth2.Config) *peoplev1.Service {
 	// time.
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
-	if err != nil {
+	if err != nil || tok.Expiry.Before(time.Now()) {
 		tok = getTokenFromWeb(config)
 		saveToken(tokFile, tok)
 	}
@@ -35,7 +36,7 @@ func Client(ctx context.Context, config *oauth2.Config) *peoplev1.Service {
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
 	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
+		"authorization code (\"code\" param in redirect url): \n%v\n", authURL)
 
 	var authCode string
 	if _, err := fmt.Scan(&authCode); err != nil {
