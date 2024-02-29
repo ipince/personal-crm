@@ -20,10 +20,21 @@ func Client(ctx context.Context, config *oauth2.Config) *peoplev1.Service {
 	// time.
 	tokFile := "token.json"
 	tok, err := tokenFromFile(tokFile)
-	if err != nil || tok.Expiry.Before(time.Now()) {
+	if err != nil {
 		tok = getTokenFromWeb(config)
 		saveToken(tokFile, tok)
 	}
+	if tok.Expiry.Before(time.Now()) {
+		fmt.Printf("saved token expired on %s. attempting to refresh...\n", tok.Expiry)
+		tokSource := config.TokenSource(ctx, tok)
+		tok, err = tokSource.Token()
+		if err != nil {
+			fmt.Println("failed to refresh exiting token, asking for new one")
+			tok = getTokenFromWeb(config)
+		}
+		saveToken(tokFile, tok)
+	}
+
 	client := config.Client(context.Background(), tok)
 	srv, err := peoplev1.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
