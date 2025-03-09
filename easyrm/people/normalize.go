@@ -12,6 +12,61 @@ func Normalize(srv *peoplev1.Service, person *peoplev1.Person) error {
 	return normalizePhoneNumbers(srv, person)
 }
 
+// NormalizeUrls normalizes the URLs of a person
+func NormalizeUrls(srv *peoplev1.Service, person *peoplev1.Person) error {
+	domains := map[string]string{
+		"facebook.com":  "Facebook",
+		"linkedin.com":  "LinkedIn",
+		"instagram.com": "Instagram",
+		"youtube.com":   "YouTube",
+	}
+	remove := "plus.google.com"
+
+	rmIndex := -1
+	dirty := false
+
+	for i, u := range person.Urls {
+		if u.Metadata.Source.Type != "CONTACT" {
+			continue
+		}
+
+		if strings.Contains(u.Value, remove) {
+			rmIndex = i
+			dirty = true
+			continue
+		}
+
+		known := false
+		for domain, label := range domains {
+			if strings.Contains(u.Value, domain) {
+				known = true
+				if u.Type != label {
+					fmt.Printf("%s: %s (%s -> %s)\n", Name(person), u.Value, u.Type, label)
+					u.Type = label
+					dirty = true
+					break
+				}
+			}
+		}
+		if !known && u.Type != "other" {
+			fmt.Printf("%s: %s (%s -> %s)\n", Name(person), u.Value, u.Type, "other")
+			u.Type = "other"
+			dirty = true
+		}
+	}
+
+	if rmIndex != -1 { // remove...
+		person.Urls = append(person.Urls[:rmIndex], person.Urls[rmIndex+1:]...)
+		dirty = true
+	}
+
+	if dirty {
+		return update(srv, person, "urls")
+	}
+
+	return nil // nothing to update
+}
+
 func normalizePhoneNumbers(srv *peoplev1.Service, person *peoplev1.Person) error {
 	msgs := []string{}
 	for i, n := range person.PhoneNumbers {

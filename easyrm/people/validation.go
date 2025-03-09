@@ -3,7 +3,7 @@ package people
 import (
 	"errors"
 	"fmt"
-	"log/slog"
+	"log"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -12,23 +12,22 @@ import (
 
 // Validate prints any non-conforming fields found in the given person
 func Validate(person *peoplev1.Person) {
-	var errs []error
+	if err := validateNames(person); err != nil {
+		fmt.Printf("Name validation error for %s: %v\n", Name(person), err)
+	}
+	if err := validateBirthdays(person); err != nil {
+		fmt.Printf("Birthday validation error for %s: %v\n", Name(person), err)
+	}
+}
 
-	err := validateNames(person)
-	if err != nil {
-		errs = append(errs, err)
-	}
-	err = validateBirthdays(person)
-	if err != nil {
-		errs = append(errs, err)
-	}
+// ValidateNames validates the names of a person
+func ValidateNames(person *peoplev1.Person) error {
+	return validateNames(person)
+}
 
-	if len(errs) > 0 {
-		fmt.Printf("Failed to validate person %s\n", Link(person))
-		for _, e := range errs {
-			fmt.Println(e)
-		}
-	}
+// ValidateBirthdays validates the birthdays of a person
+func ValidateBirthdays(person *peoplev1.Person) error {
+	return validateBirthdays(person)
 }
 
 func validateNames(person *peoplev1.Person) error {
@@ -50,7 +49,7 @@ func validateNames(person *peoplev1.Person) error {
 
 func validateBirthdays(person *peoplev1.Person) error {
 	if len(person.Birthdays) > 1 {
-		slog.Info(fmt.Sprintf("%+v", person.Birthdays))
+		log.Printf("%+v", person.Birthdays)
 		spew.Dump(person.Birthdays)
 		return errors.New("too many birthdays")
 	} else if len(person.Birthdays) == 1 {

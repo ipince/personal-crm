@@ -1,7 +1,0 @@
-{
-  "packages": [
-    "go@latest",
-    "google-cloud-sdk@latest"
-  ],
-  "shell": {}
-}
