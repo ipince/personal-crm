@@ -25,7 +25,7 @@ func init() {
 	setupValidateCommands(rootCmd)
 	setupSummarizeCommand(rootCmd)
 	setupListCommands(rootCmd)
-	setupTagsCommands(rootCmd)
+	setupEnrichCommands(rootCmd)
 }
 
 func main() {

@@ -13,16 +13,16 @@ import (
 )
 
 func Summarize(srv *peoplev1.Service, all []*peoplev1.Person) error {
-	summarizeGenders(all)
-	summarizeBirthdays(all)
-	summarizeAddresses(all)
-	summarizeCustomKeyPairs(all)
-	summarizeNotes(all)
-	summarizeUrls(all)
-	return summarizeTags(srv, all)
+	SummarizeGenders(all)
+	SummarizeBirthdays(all)
+	SummarizeAddresses(all)
+	SummarizeCustomKeyPairs(all)
+	SummarizeNotes(all)
+	SummarizeUrls(all)
+	return SummarizeTags(srv, all)
 }
 
-func summarizeTags(srv *peoplev1.Service, all []*peoplev1.Person) error {
+func SummarizeTags(srv *peoplev1.Service, all []*peoplev1.Person) error {
 	groups, err := srv.ContactGroups.List().Do()
 	if err != nil {
 		return err
@@ -97,7 +97,7 @@ func summarizeTags(srv *peoplev1.Service, all []*peoplev1.Person) error {
 	return nil
 }
 
-func summarizeUrls(all []*peoplev1.Person) {
+func SummarizeUrls(all []*peoplev1.Person) {
 	counts := map[string]int{}
 	for _, p := range all {
 		urls := 0
@@ -121,7 +121,7 @@ func summarizeUrls(all []*peoplev1.Person) {
 	}
 }
 
-func summarizeBirthdays(all []*peoplev1.Person) {
+func SummarizeBirthdays(all []*peoplev1.Person) {
 	counts := map[string]int{}
 	for _, p := range all {
 		// Assume len(birthdays) == 0
@@ -152,7 +152,7 @@ func summarizeBirthdays(all []*peoplev1.Person) {
 	}
 }
 
-func summarizeAddresses(all []*peoplev1.Person) {
+func SummarizeAddresses(all []*peoplev1.Person) {
 	counts := map[string]int{}
 	for _, p := range all {
 		addrs := 0
@@ -177,7 +177,7 @@ func summarizeAddresses(all []*peoplev1.Person) {
 	}
 }
 
-func summarizeCustomKeyPairs(all []*peoplev1.Person) {
+func SummarizeCustomKeyPairs(all []*peoplev1.Person) {
 	counts := map[string]int{}
 	for _, p := range all {
 		for _, ud := range p.UserDefined {
@@ -198,7 +198,7 @@ func summarizeCustomKeyPairs(all []*peoplev1.Person) {
 	}
 }
 
-func summarizeNotes(all []*peoplev1.Person) {
+func SummarizeNotes(all []*peoplev1.Person) {
 	counts := map[string]int{}
 	for _, p := range all {
 		for _, n := range p.Biographies {
@@ -218,7 +218,7 @@ func summarizeNotes(all []*peoplev1.Person) {
 	}
 }
 
-func summarizeGenders(all []*peoplev1.Person) {
+func SummarizeGenders(all []*peoplev1.Person) {
 	hist := map[string]int{}
 	for _, p := range all {
 		val := "none"

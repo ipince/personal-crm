@@ -13,20 +13,28 @@ import (
 
 // setupListCommands adds list commands to the root command
 func setupListCommands(rootCmd *cobra.Command) {
-	// Fetch all command
+	// List command
 	listCmd := &cobra.Command{
 		Use:   "list",
+		Short: "List contacts",
+		Long:  "List contacts with different filters (all, z-names)",
+	}
+	rootCmd.AddCommand(listCmd)
+
+	// List all subcommand
+	listAllCmd := &cobra.Command{
+		Use:   "all",
 		Short: "List all contacts",
 		Run: func(cmd *cobra.Command, args []string) {
 			srv := initializeClient()
 			fetchAll(srv)
 		},
 	}
-	rootCmd.AddCommand(listCmd)
+	listCmd.AddCommand(listAllCmd)
 
-	// List Z names command
+	// List Z names subcommand
 	listZNamesCmd := &cobra.Command{
-		Use:   "list-z-names",
+		Use:   "z-names",
 		Short: "List contacts with 'z' in their name",
 		Run: func(cmd *cobra.Command, args []string) {
 			srv := initializeClient()
@@ -34,7 +42,10 @@ func setupListCommands(rootCmd *cobra.Command) {
 			listZNames(all)
 		},
 	}
-	rootCmd.AddCommand(listZNamesCmd)
+	listCmd.AddCommand(listZNamesCmd)
+
+	// Remove the old list-z-names command from the root command
+	// This is now a subcommand of the list command
 }
 
 // fetchAll fetches all contacts
