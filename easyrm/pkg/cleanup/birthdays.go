@@ -1,12 +1,13 @@
 package cleanup
 
 import (
-	"easyrm/people"
 	"encoding/csv"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+
+	"easyrm/pkg/people"
 
 	peoplev1 "google.golang.org/api/people/v1"
 )

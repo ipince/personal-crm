@@ -1,10 +1,11 @@
 package main
 
 import (
-	"easyrm/contact"
 	"fmt"
 	"log"
 	"os"
+
+	"easyrm/pkg/contact"
 
 	"github.com/spf13/cobra"
 	peoplev1 "google.golang.org/api/people/v1"

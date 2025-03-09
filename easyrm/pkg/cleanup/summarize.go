@@ -1,11 +1,12 @@
 package cleanup
 
 import (
-	"easyrm/contact"
-	"easyrm/people"
 	"fmt"
 	"sort"
 	"strings"
+
+	"easyrm/pkg/contact"
+	"easyrm/pkg/people"
 
 	"golang.org/x/exp/slices"
 	peoplev1 "google.golang.org/api/people/v1"

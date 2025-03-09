@@ -1,8 +1,9 @@
 package cleanup
 
 import (
-	"easyrm/people"
 	"fmt"
+
+	"easyrm/pkg/people"
 
 	"github.com/AlecAivazis/survey/v2"
 	"golang.org/x/exp/slices"

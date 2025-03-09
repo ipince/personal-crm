@@ -1,8 +1,9 @@
 package cleanup
 
 import (
-	"easyrm/people"
 	"fmt"
+
+	"easyrm/pkg/people"
 
 	peoplev1 "google.golang.org/api/people/v1"
 )

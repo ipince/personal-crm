@@ -1,9 +1,10 @@
 package main
 
 import (
-	"easyrm/cleanup"
-	"easyrm/people"
 	"fmt"
+
+	"easyrm/pkg/cleanup"
+	"easyrm/pkg/people"
 
 	"github.com/spf13/cobra"
 )

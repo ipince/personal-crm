@@ -1,8 +1,9 @@
 package main
 
 import (
-	"easyrm/cleanup"
 	"log"
+
+	"easyrm/pkg/cleanup"
 
 	"github.com/spf13/cobra"
 )

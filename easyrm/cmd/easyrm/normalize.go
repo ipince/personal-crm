@@ -1,8 +1,9 @@
 package main
 
 import (
-	"easyrm/people"
 	"fmt"
+
+	"easyrm/pkg/people"
 
 	"github.com/spf13/cobra"
 	peoplev1 "google.golang.org/api/people/v1"

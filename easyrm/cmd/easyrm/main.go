@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"easyrm/people"
 	"fmt"
 	"log"
 	"os"
+
+	"easyrm/pkg/people"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2/google"
