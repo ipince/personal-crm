@@ -3,8 +3,10 @@ package people
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	peoplev1 "google.golang.org/api/people/v1"
 )
 
@@ -48,6 +50,8 @@ func validateNames(person *peoplev1.Person) error {
 
 func validateBirthdays(person *peoplev1.Person) error {
 	if len(person.Birthdays) > 1 {
+		slog.Info(fmt.Sprintf("%+v", person.Birthdays))
+		spew.Dump(person.Birthdays)
 		return errors.New("too many birthdays")
 	} else if len(person.Birthdays) == 1 {
 		if person.Birthdays[0].Date == nil {

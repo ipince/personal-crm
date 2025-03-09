@@ -22,7 +22,7 @@ func MergeFacebookURLs(srv *peoplev1.Service, all []*peoplev1.Person, fbFriends 
 	// Get contacts who already have an FB URL. These will not be edited.
 	fbContacts := map[string]*peoplev1.Person{}
 	for _, p := range all {
-		for _, u := range facebookURLs(p) {
+		for _, u := range FacebookURLs(p) {
 			fbContacts[u] = p
 		}
 	}
@@ -117,8 +117,19 @@ func LoadFacebookFriends(csvPath string) ([]*FacebookFriend, error) {
 	return friends, nil
 }
 
+// FacebookURLs returns a slice of urls in person that are Facebook links.
+func FacebookURLs(person *peoplev1.Person) []string {
+	urls := []string{}
+	for _, u := range person.Urls {
+		if strings.Contains(u.Value, "facebook.com") { // could also match on Type.
+			urls = append(urls, u.Value)
+		}
+	}
+	return urls
+}
+
 func setFacebookURLIfNoneExists(srv *peoplev1.Service, person *peoplev1.Person, url string) error {
-	if len(facebookURLs(person)) == 0 {
+	if len(FacebookURLs(person)) == 0 {
 		err := setFacebookURL(srv, person, url)
 		if err != nil {
 			return err
@@ -127,4 +138,24 @@ func setFacebookURLIfNoneExists(srv *peoplev1.Service, person *peoplev1.Person, 
 		fmt.Printf("skipping adding %s to %s because it would overwrite existing url\n", url, Link(person))
 	}
 	return nil
+}
+
+func setFacebookURL(srv *peoplev1.Service, person *peoplev1.Person, fbURL string) error {
+
+	// Check if one exists and replace if so.
+	for _, u := range person.Urls {
+		if strings.Contains(u.Value, "facebook.com") {
+			// replace
+			u.Type = "Facebook" // maybe make it say facebook?
+			u.Value = fbURL
+			return update(srv, person, "urls")
+		}
+	}
+
+	// else, add it
+	person.Urls = append(person.Urls, &peoplev1.Url{
+		Type:  "Facebook",
+		Value: fbURL,
+	})
+	return update(srv, person, "urls")
 }

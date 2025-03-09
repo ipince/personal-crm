@@ -1,15 +1,18 @@
 package people
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/ghodss/yaml"
 	peoplev1 "google.golang.org/api/people/v1"
 )
 
 const TestPersonID = "people/c4490748168429910297"
+const NewlyAdded = "people/c5197444844658991492"
 
 var PeopleFields = []string{
 
@@ -17,12 +20,13 @@ var PeopleFields = []string{
 	"names",
 	"nicknames",
 	"birthdays", // set for all.
+	"genders",   // TODO: Maybe use? TEMP
 	"photos",
 
 	// Contact
-	"addresses", // Physical addresses
 	"emailAddresses",
 	"phoneNumbers",
+	"addresses",   // Physical addresses
 	"userDefined", // Custom: Current City, Past City
 
 	// Work -- settable both in Contacts and Profile?
@@ -33,7 +37,6 @@ var PeopleFields = []string{
 	"events", // maybe day-we-met
 
 	// Links
-	"imClients",
 	"urls", // facebook url (or others, can have a label)
 
 	// Relationships? -- I probably won't really use
@@ -57,7 +60,7 @@ var PeopleFields = []string{
 	"clientData",
 	// "coverPhotos", // REMOVED: mostly default photo from Google+ (source=PROFILE)
 	"externalIds",
-	"genders", // TODO: Maybe use? TEMP
+	"imClients", // Deprecated by Google Contacts
 	"interests",
 	"locales",
 	"locations", // TODO decide what to do
@@ -106,54 +109,37 @@ func Insert(srv *peoplev1.Service, fullName, fbURL string) error {
 	return nil
 }
 
-func SetBirthdate(srv *peoplev1.Service, id string, day, month int64, year *int64) error {
-
-	person, err := Get(srv, id)
-	if err != nil {
-		return err // TODO
-	}
-	printBirthdays(person)
-
-	// If we set as text, it remains as text, even if the data is parseable.
-	// Thus, we always set as a Date instead.
-	dob := &peoplev1.Birthday{
-		Date: &peoplev1.Date{
-			Day:   day,
-			Month: month,
-		},
-	}
-	if year != nil {
-		dob.Date.Year = *year
-	}
-	person.Birthdays[0] = dob
-
-	return update(srv, person, "birthdays")
+func UpdateAll(srv *peoplev1.Service, people []*peoplev1.Person, fields string) error {
+	return updateAll(srv, people, fields)
 }
 
-func setFacebookURL(srv *peoplev1.Service, person *peoplev1.Person, fbURL string) error {
-
-	// Check if one exists and replace if so.
-	for _, u := range person.Urls {
-		if strings.Contains(u.Value, "facebook.com") {
-			// replace
-			u.Type = "Facebook" // maybe make it say facebook?
-			u.Value = fbURL
-			return update(srv, person, "urls")
-		}
-	}
-
-	// else, add it
-	person.Urls = append(person.Urls, &peoplev1.Url{
-		Type:  "Facebook",
-		Value: fbURL,
-	})
-	return update(srv, person, "urls")
-}
+var batchSize = 200
 
 func updateAll(srv *peoplev1.Service, people []*peoplev1.Person, fields string) error {
+	for i := 0; i < len(people); i += batchSize {
+		end := i + batchSize
+
+		if end > len(people) {
+			end = len(people)
+		}
+		err := updateBatch(srv, people[i:end], fields)
+		if err != nil {
+			return err
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+	return nil
+}
+
+func updateBatch(srv *peoplev1.Service, batch []*peoplev1.Person, fields string) error {
+	if len(batch) > batchSize {
+		return errors.New("batch is too large")
+	}
+	fmt.Printf("writing batch of size %d...\n", len(batch))
 
 	toUpdate := map[string]peoplev1.Person{}
-	for _, p := range people {
+	for _, p := range batch {
 		toUpdate[p.ResourceName] = *p
 	}
 	_, err := srv.People.BatchUpdateContacts(&peoplev1.BatchUpdateContactsRequest{
@@ -229,31 +215,6 @@ func Print(person *peoplev1.Person) {
 	}
 	fmt.Println(Link(person))
 	fmt.Println(string(y))
-}
-
-func printBirthdays(person *peoplev1.Person) {
-	fmt.Printf("Found %d birthdays in person %s: ", len(person.Birthdays), person.Names[0].DisplayName)
-	for _, b := range person.Birthdays {
-		if b.Date != nil {
-			fmt.Printf("date %d/%d/%d, ", b.Date.Day, b.Date.Month, b.Date.Year)
-		} else {
-			fmt.Printf("text %s, ", b.Text)
-		}
-	}
-	fmt.Println()
-}
-
-func facebookURLs(person *peoplev1.Person) []string {
-	urls := []string{}
-	if strings.Contains(Link(person), "//contacts.google.com/person/c7894887911642936979") {
-		fmt.Printf("%s has %d urls\n", person.Names[0].DisplayName, len(person.Urls))
-	}
-	for _, u := range person.Urls {
-		if strings.Contains(u.Value, "facebook.com") { // could also match on Type.
-			urls = append(urls, u.Value)
-		}
-	}
-	return urls
 }
 
 func Link(person *peoplev1.Person) string {

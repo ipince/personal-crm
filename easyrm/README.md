@@ -8,6 +8,15 @@ integrates with other Google services in useful ways (e.g. a contact's address w
 and their birthday on Google Calendar).
 
 
+## Fields
+
+Every contact is either a person or a company/org. We enforce that companies don't have a `Name`
+property, but only an `Organization` property. Google will display the org name if no name exists,
+so this works well.
+
+* Gender: Human contacts have `male`/`female`/`other`. Business contacts have `other`.
+
+
 ## Merging Facebook friends into EasyRM
 
 One key feature of a relationship manager is to unify a contact's information in one place. To that end, I
