@@ -107,4 +107,16 @@ func setupSummarizeCommand(rootCmd *cobra.Command) {
 		},
 	}
 	summarizeCmd.AddCommand(summarizeTagsCmd)
+
+	// Summarize cities subcommand
+	summarizeCitiesCmd := &cobra.Command{
+		Use:   "cities",
+		Short: "Summarize contacts by Current City",
+		Run: func(cmd *cobra.Command, args []string) {
+			srv := initializeClient()
+			all := fetchAll(srv)
+			cleanup.SummarizeCities(all)
+		},
+	}
+	summarizeCmd.AddCommand(summarizeCitiesCmd)
 }

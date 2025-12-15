@@ -118,18 +118,6 @@ var tags = []*people.Tag{
 			return "", nil
 		}},
 	},
-	{
-		Name:        "Wedding",
-		Description: "Whether to invite to wedding or not.",
-		Options: []people.Option{
-			{"w:no", "do not invite to wedding"},
-			{"w:maybe", "maybe invite to wedding"},
-			{"w:yes", "invite to wedding"},
-			{"w:idk", "i dont know, ask me later again"},
-		},
-		Exhaustive:          true,
-		CreateIfNonExistent: true,
-	},
 }
 
 func ApplyTags(srv *peoplev1.Service, peeps []*peoplev1.Person) {

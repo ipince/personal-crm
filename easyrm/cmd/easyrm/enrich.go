@@ -41,7 +41,6 @@ func setupEnrichCommands(rootCmd *cobra.Command) {
 	}
 	enrichCmd.AddCommand(enrichGenderCmd)
 
-	// Enrich all subcommand
 	enrichAllCmd := &cobra.Command{
 		Use:   "all",
 		Short: "Apply all enrichments to contacts",

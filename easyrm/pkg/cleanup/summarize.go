@@ -2,12 +2,14 @@ package cleanup
 
 import (
 	"fmt"
+	"log/slog"
 	"sort"
 	"strings"
 
 	"easyrm/pkg/contact"
 	"easyrm/pkg/people"
 
+	"github.com/davecgh/go-spew/spew"
 	"golang.org/x/exp/slices"
 	peoplev1 "google.golang.org/api/people/v1"
 )
@@ -123,26 +125,45 @@ func SummarizeUrls(all []*peoplev1.Person) {
 
 func SummarizeBirthdays(all []*peoplev1.Person) {
 	counts := map[string]int{}
+	bothExamplePrinted := false
 	for _, p := range all {
-		// Assume len(birthdays) == 0
 		if len(p.Birthdays) == 0 {
 			counts["(none)"] += 1
 			continue
 		}
-		b := p.Birthdays[0]
-		if b.Metadata.Source.Type != "CONTACT" {
-			fmt.Println(contact.New(p).ShortString())
-			continue
-		}
 
-		if b.Text != "" {
-			counts["Text"] += 1
-		} else if b.Date != nil {
-			if b.Date.Year == 0 {
-				counts["Day-Only"] += 1
-			} else {
-				counts["Full"] += 1
+		counted := false
+		for _, b := range p.Birthdays {
+			if b.Metadata.Source.Type != "CONTACT" {
+				slog.Info(fmt.Sprintf("ignoring birthday from non-CONTACT source on %s", people.Name(p)))
+				continue // ignore
 			}
+			if counted {
+				slog.Info(fmt.Sprintf("found more than one birthday for %s from a CONTACT source, ignoring", people.Name(p)))
+				continue
+			}
+
+			if b.Text != "" {
+				if b.Date != nil {
+					counts["Both"] += 1
+					if !bothExamplePrinted {
+						fmt.Printf("%s - %s\n", people.Name(p), people.Link(p))
+						spew.Dump(b)
+						bothExamplePrinted = true
+					}
+				} else {
+					counts["Text"] += 1
+				}
+			} else if b.Date != nil {
+				if b.Date.Year == 0 {
+					counts["Day-Only"] += 1
+				} else {
+					counts["Full"] += 1
+				}
+			} else {
+				counts["Nil"] += 1
+			}
+			counted = true
 		}
 	}
 
@@ -241,5 +262,24 @@ func SummarizeGenders(all []*peoplev1.Person) {
 	fmt.Println("Genders:")
 	for k, v := range hist {
 		fmt.Printf("  - %s: %d (%.2f%%)\n", k, v, float64(v)*100/float64(len(all)))
+	}
+}
+
+func SummarizeCities(all []*peoplev1.Person) {
+	namesPerCity := map[string][]string{}
+	counts := map[string]int{}
+
+	for _, p := range all {
+		for _, ud := range p.UserDefined {
+			if ud.Key == "Current City" {
+				counts[ud.Value]++
+				namesPerCity[ud.Value] = append(namesPerCity[ud.Value], people.Name(p))
+			}
+		}
+	}
+
+	fmt.Println("Current Cities:")
+	for city, count := range counts {
+		fmt.Printf("  - %s: %d (%s)\n", city, count, strings.Join(namesPerCity[city], ", "))
 	}
 }

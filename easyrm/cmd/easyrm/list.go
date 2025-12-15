@@ -44,8 +44,19 @@ func setupListCommands(rootCmd *cobra.Command) {
 	}
 	listCmd.AddCommand(listZNamesCmd)
 
-	// Remove the old list-z-names command from the root command
-	// This is now a subcommand of the list command
+	// List by location subcommand
+	listLocationCmd := &cobra.Command{
+		Use:   "location [location]",
+		Short: "List contacts by location (city, state, or country)",
+		Long:  "List contacts filtered by location. Location can be a city, US state, or country. Searches in the 'Current City' UserDefined field.",
+		Args:  cobra.ExactArgs(1),
+		Run: func(cmd *cobra.Command, args []string) {
+			srv := initializeClient()
+			all := fetchAll(srv)
+			listByLocation(all, args[0])
+		},
+	}
+	listCmd.AddCommand(listLocationCmd)
 }
 
 // fetchAll fetches all contacts
@@ -73,4 +84,46 @@ func listZNames(peeps []*peoplev1.Person) {
 		}
 	}
 	fmt.Printf("found %d names\n", count)
+}
+
+// listByLocation lists contacts filtered by location
+func listByLocation(peeps []*peoplev1.Person, location string) {
+	count := 0
+	location = strings.ToLower(location)
+	
+	for _, p := range peeps {
+		currentCity := getCurrentCity(p)
+		if currentCity != "" && matchesLocation(currentCity, location) {
+			count++
+			fmt.Printf("%s - %s (%s)\n", people.Name(p), currentCity, people.Link(p))
+		}
+	}
+	fmt.Printf("found %d contacts in %s\n", count, location)
+}
+
+// getCurrentCity extracts the current city from a person's UserDefined fields
+func getCurrentCity(p *peoplev1.Person) string {
+	for _, ud := range p.UserDefined {
+		if ud.Key == "Current City" {
+			return ud.Value
+		}
+	}
+	return ""
+}
+
+// matchesLocation checks if a location string matches the search term
+// Supports matching city, state, or country
+func matchesLocation(location, searchTerm string) bool {
+	location = strings.ToLower(location)
+	searchTerm = strings.ToLower(searchTerm)
+	
+	// Split location by comma to get city, state/country parts
+	parts := strings.Split(location, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if strings.Contains(part, searchTerm) {
+			return true
+		}
+	}
+	return false
 }
